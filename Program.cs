@@ -5,8 +5,12 @@ namespace EpamTest
 {
 	class Program
     {
+		/// <summary>
+		/// Глобально задаю Массив который в последствие заполню
+		/// а также первый ход Первого игрока.
+		/// Я решил , ходи я первым то поставил бы на середине..по моему скромному мнению это самый выгодный первый ход ))
+		/// </summary>
         public static int firsStep = 224 / 2;
-
 		public static string[] array = new string[225];
 
 		static void Main(string[] args)
@@ -30,9 +34,12 @@ namespace EpamTest
 			player2.firstStep();
 
 			//ATTACK
+			///Атака продолжается для каждого игрока пока у оппонента или у него не заполнится в ряд 5 ячеек
+			///Также при каждом ходе проверяю длину заполненных в ряд ячеек оппонента и в зависимости от этого
+			///идет Атака или Защита.
 			while(player1.biggest != 5 || player2.biggest != 5)
             {
-				if(player2.biggest == 3)
+				if(player2.biggest > 3)
                 {
 					player1.defend(player2.choice);
                 }
@@ -49,7 +56,7 @@ namespace EpamTest
 					return;
                 }
 
-				if (player1.biggest == 3)
+				if (player1.biggest > 3)
                 {
 					player2.defend(player1.choice);
                 }
@@ -66,7 +73,6 @@ namespace EpamTest
 					return;
 				}
 			}
-			
 		}
 
 		static void showArray(string[] Array)
@@ -107,22 +113,19 @@ namespace EpamTest
 			List<int> myFirstAndLast;
 			List<int> opFirstAndLast;
 
-			public HashSet<int> S = new HashSet<int>();
+			public HashSet<int> HSet = new HashSet<int>();
 
 			//Choice - 1 = Horizontal
-			//Choice - 2 = Vertical
-			//Choice - 3 = DiagonalRight
-			//Choice - 4 = DiagonalLeft
+			//Choice - 15 = Vertical
+			//Choice - 16 = DiagonalRight
+			//Choice - 14 = DiagonalLeft
 			public int choice = 0;
 
 			public int firstPos = 0;
 			public int lastPos = 0;
 
 
-			public User(): this("","",null,null,0, null, null)
-            {
-
-            }
+			public User(): this("","",null,null,0, null, null) {}
 			public User(string sign):this("","",null,null,0, null, null)
             {
 				playerSign = sign;
@@ -176,16 +179,12 @@ namespace EpamTest
                 {
 					choice = 1;
                 }
-                else if(mySteps.Count >= 2 && checkFutureSteps(mySteps, choice, S) == false)
+                else if(mySteps.Count >= 2 && checkFutureSteps(mySteps, choice, HSet) == false)
                 {
-					chooseChoice(S);
+					chooseAnotherChoice(HSet);
 					Console.WriteLine("WE ARE IN CICLE!!");
 					attack();
 				}
-				//else if (mySteps.Count >= 2 && checkFutureSteps(mySteps, choice, S) == true)
-				//{
-				//	chooseChoice(S);
-				//}
 
 				//Собственно Сам Ход
 				if(choice != 0)
@@ -213,7 +212,7 @@ namespace EpamTest
 							Console.Write("Something happend while attaked!!!");
 							Console.ReadLine();
 						}
-						biggest = checkDiagonalVerticalHorizontal(mySteps, mySteps.Count, S, choice);
+						biggest = checkDiagonalVerticalHorizontal(mySteps, mySteps.Count, HSet, choice);
 					}
                     else
                     {
@@ -260,45 +259,39 @@ namespace EpamTest
 
 			}
 
-			public void chooseChoice(HashSet<int> S)
+			public void chooseAnotherChoice(HashSet<int> Set)
             {
-				int horizontal = checkDiagonalVerticalHorizontal(mySteps, mySteps.Count, S, 1);
-				int vertical = checkDiagonalVerticalHorizontal(mySteps, mySteps.Count, S, 15);
-				int diagonalR = checkDiagonalVerticalHorizontal(mySteps, mySteps.Count, S, 16);
-				int diagonalL = checkDiagonalVerticalHorizontal(mySteps, mySteps.Count, S, 14);
+				int temp = mySteps[^1];
+				mySteps.Clear();
+				mySteps.TrimExcess();
+				mySteps.Add(temp);
 
-				biggest = Math.Max(Math.Max(Math.Max(horizontal, vertical), diagonalR), diagonalL);
-
-				if(biggest == horizontal)
+				if (checkFutureSteps(mySteps, 15, Set) == true)
                 {
-					if (checkFutureSteps(mySteps, 1, S) == true)
-						choice = 1;
+					choice = 15;
 				}
-				else if (biggest == vertical)
+				else if (checkFutureSteps(mySteps, 16, Set) == true)
 				{
-					if (checkFutureSteps(mySteps, 15, S) == true)
-						choice = 15;
+					choice = 16;
 				}
-				else if (biggest == diagonalR)
+				else if (checkFutureSteps(mySteps, 14, Set) == true)
 				{
-					if (checkFutureSteps(mySteps, 15, S) == true)
-						choice = 15;
+					choice = 14;
 				}
-				else if (biggest == diagonalL)
-				{
-					if (checkFutureSteps(mySteps, 15, S) == true)
-						choice = 15;
-				}
-				else
+				else if (checkFutureSteps(mySteps, 1, Set) == true)
 				{
 					choice = 1;
 				}
+
+				firstPos = temp;
+				lastPos = 0;
+				biggest = 0;
 			}
 
 			public bool checkFutureSteps(List<int> arr, int step, HashSet<int> S)
             {
 				bool ans = false;
-
+				S.Clear();
 				for (int i = 0; i < arr.Count; ++i)
 				{
 					S.Add(arr[i]);
